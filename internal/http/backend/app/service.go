@@ -88,7 +88,7 @@ func (a *App) ListServices(ctx context.Context, req ListServicesRequest) (*ListS
 	}
 
 	// Handle pagination here for now, storage returns all.
-	psvcs, cursors := paginateSlice(svcs, req.Cursor)
+	psvcs, cursors := paginateSlice(svcs, req.Cursor, 0)
 	return &ListServicesResponse{
 		Services:          psvcs,
 		PaginationCursors: cursors,
