@@ -17,6 +17,7 @@ import (
 
 type ServiceApp interface {
 	ListSLOs(ctx context.Context, req backendapp.ListSLOsRequest) (*backendapp.ListSLOsResponse, error)
+	GetSLO(ctx context.Context, req backendapp.GetSLORequest) (*backendapp.GetSLOResponse, error)
 }
 
 type Config struct {
@@ -54,6 +55,9 @@ func New(cfg Config) (http.Handler, error) {
 	registeredTools++
 	listSLOsTool, listSLOsToolHandler := tools.NewListSLOsTool(cfg.ServiceApp)
 	registerTool(server, listSLOsTool, listSLOsToolHandler)
+	registeredTools++
+	getSLOTool, getSLOToolHandler := tools.NewGetSLOTool(cfg.ServiceApp)
+	registerTool(server, getSLOTool, getSLOToolHandler)
 	registeredTools++
 
 	cfg.Logger.WithValues(log.Kv{"tools": registeredTools}).Infof("MCP request/response handler enabled")

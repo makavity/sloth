@@ -5,7 +5,7 @@
 ### Added
 
 - `server`: Support HTTP request/response MCP with the `--mcp-enabled` and `--mcp-path` flags.
-- MCP: Add the `context` and `list_slos` tools.
+- MCP: Add the `context`, `list_slos` and `get_slo` tools.
 
 ## [v0.16.0] - 2026-04-04
 
