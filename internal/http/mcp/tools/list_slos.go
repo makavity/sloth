@@ -94,31 +94,35 @@ func newListSLOsToolHandler(app SLOLister) sdkmcp.ToolHandlerFor[listSLOsToolInp
 		}
 
 		for _, slo := range resp.SLOs {
-			item := listSLOsToolOutputItem{
-				ID:                        slo.SLO.ID,
-				SlothID:                   slo.SLO.SlothID,
-				Name:                      slo.SLO.Name,
-				ServiceID:                 slo.SLO.ServiceID,
-				Objective:                 slo.SLO.Objective,
-				Period:                    slo.SLO.PeriodDuration.String(),
-				IsGrouped:                 slo.SLO.IsGrouped,
-				GroupLabels:               slo.SLO.GroupLabels,
-				BurningBudgetPercent:      slo.Budget.BurningBudgetPercent,
-				BurnedBudgetWindowPercent: slo.Budget.BurnedBudgetWindowPercent,
-				HasPageAlert:              slo.Alerts.FiringPage != nil,
-				HasWarningAlert:           slo.Alerts.FiringWarning != nil,
-			}
-
-			if slo.Alerts.FiringPage != nil {
-				item.PageAlertName = slo.Alerts.FiringPage.Name
-			}
-			if slo.Alerts.FiringWarning != nil {
-				item.WarningAlertName = slo.Alerts.FiringWarning.Name
-			}
-
-			output.SLOs = append(output.SLOs, item)
+			output.SLOs = append(output.SLOs, mapRealTimeSLOToToolOutputItem(slo))
 		}
 
 		return nil, output, nil
 	}
+}
+
+func mapRealTimeSLOToToolOutputItem(slo backendapp.RealTimeSLODetails) listSLOsToolOutputItem {
+	item := listSLOsToolOutputItem{
+		ID:                        slo.SLO.ID,
+		SlothID:                   slo.SLO.SlothID,
+		Name:                      slo.SLO.Name,
+		ServiceID:                 slo.SLO.ServiceID,
+		Objective:                 slo.SLO.Objective,
+		Period:                    slo.SLO.PeriodDuration.String(),
+		IsGrouped:                 slo.SLO.IsGrouped,
+		GroupLabels:               slo.SLO.GroupLabels,
+		BurningBudgetPercent:      slo.Budget.BurningBudgetPercent,
+		BurnedBudgetWindowPercent: slo.Budget.BurnedBudgetWindowPercent,
+		HasPageAlert:              slo.Alerts.FiringPage != nil,
+		HasWarningAlert:           slo.Alerts.FiringWarning != nil,
+	}
+
+	if slo.Alerts.FiringPage != nil {
+		item.PageAlertName = slo.Alerts.FiringPage.Name
+	}
+	if slo.Alerts.FiringWarning != nil {
+		item.WarningAlertName = slo.Alerts.FiringWarning.Name
+	}
+
+	return item
 }
