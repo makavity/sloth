@@ -2,27 +2,33 @@ package tools
 
 import (
 	"context"
+	"fmt"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	backendapp "github.com/slok/sloth/internal/http/backend/app"
+	"github.com/slok/sloth/internal/log"
 )
 
 type SLOLister interface {
 	ListSLOs(ctx context.Context, req backendapp.ListSLOsRequest) (*backendapp.ListSLOsResponse, error)
 }
 
-func NewListSLOsTool(app SLOLister) (*sdkmcp.Tool, sdkmcp.ToolHandlerFor[listSLOsToolInput, listSLOsToolOutput]) {
+func NewListSLOsTool(app SLOLister, logger log.Logger) (*sdkmcp.Tool, sdkmcp.ToolHandlerFor[ListSLOsToolInput, ListSLOsToolOutput]) {
+	if logger == nil {
+		logger = log.Noop
+	}
+
 	return &sdkmcp.Tool{
 		Name:        "list_slos",
-		Description: "List SLOs with filtering, fuzzy search, sorting, and pagination. Search matches SLO IDs and grouped label values, and defaults to 100 results per page.",
+		Description: "List SLOs with filtering, fuzzy search, sorting, and pagination. Results include SLO metadata, current budget burn, consumed budget in the window, and firing alert status for each SLO. Search matches SLO IDs and grouped label values, and defaults to 100 results per page.",
 		Annotations: &sdkmcp.ToolAnnotations{
 			ReadOnlyHint: true,
 		},
-	}, newListSLOsToolHandler(app)
+	}, newListSLOsToolHandler(app, logger)
 }
 
-type listSLOsToolInput struct {
+type ListSLOsToolInput struct {
 	ServiceID                   string `json:"service_id,omitempty" jsonschema:"Filter SLOs by service ID"`
 	Search                      string `json:"search,omitempty" jsonschema:"Optional fuzzy, case-insensitive search against SLO IDs and grouped label values. Spaces are ignored. This does not search service IDs; use service_id for that"`
 	AlertFiring                 bool   `json:"alert_firing,omitempty" jsonschema:"Only include SLOs with firing alerts"`
@@ -33,12 +39,12 @@ type listSLOsToolInput struct {
 	Cursor                      string `json:"cursor,omitempty" jsonschema:"Pagination cursor returned by a previous response"`
 }
 
-type listSLOsToolOutput struct {
-	SLOs       []listSLOsToolOutputItem     `json:"slos" jsonschema:"the SLOs that matched the request"`
-	Pagination listSLOsToolOutputPagination `json:"pagination" jsonschema:"pagination cursors for requesting the next or previous page"`
+type ListSLOsToolOutput struct {
+	SLOs       []ListSLOsToolOutputItem     `json:"slos" jsonschema:"the SLOs that matched the request"`
+	Pagination ListSLOsToolOutputPagination `json:"pagination" jsonschema:"pagination cursors for requesting the next or previous page"`
 }
 
-type listSLOsToolOutputItem struct {
+type ListSLOsToolOutputItem struct {
 	ID                        string            `json:"id" jsonschema:"the unique SLO ID"`
 	SlothID                   string            `json:"sloth_id" jsonschema:"the underlying Sloth SLO identifier"`
 	Name                      string            `json:"name" jsonschema:"the SLO name"`
@@ -55,15 +61,17 @@ type listSLOsToolOutputItem struct {
 	WarningAlertName          string            `json:"warning_alert_name,omitempty" jsonschema:"the firing warning alert name when present"`
 }
 
-type listSLOsToolOutputPagination struct {
+type ListSLOsToolOutputPagination struct {
 	NextCursor  string `json:"next_cursor,omitempty" jsonschema:"the cursor to request the next page"`
 	PrevCursor  string `json:"prev_cursor,omitempty" jsonschema:"the cursor to request the previous page"`
 	HasNext     bool   `json:"has_next" jsonschema:"whether there is a next page"`
 	HasPrevious bool   `json:"has_previous" jsonschema:"whether there is a previous page"`
 }
 
-func newListSLOsToolHandler(app SLOLister) sdkmcp.ToolHandlerFor[listSLOsToolInput, listSLOsToolOutput] {
-	return func(ctx context.Context, _ *sdkmcp.CallToolRequest, input listSLOsToolInput) (*sdkmcp.CallToolResult, listSLOsToolOutput, error) {
+func newListSLOsToolHandler(app SLOLister, logger log.Logger) sdkmcp.ToolHandlerFor[ListSLOsToolInput, ListSLOsToolOutput] {
+	return func(ctx context.Context, _ *sdkmcp.CallToolRequest, input ListSLOsToolInput) (*sdkmcp.CallToolResult, ListSLOsToolOutput, error) {
+		logger.WithValues(log.Kv{"input": fmt.Sprintf("%+v", input)}).Debugf("MCP tool called")
+
 		pageSize := input.Size
 		if pageSize <= 0 {
 			pageSize = 100
@@ -80,12 +88,12 @@ func newListSLOsToolHandler(app SLOLister) sdkmcp.ToolHandlerFor[listSLOsToolInp
 			Cursor:                            input.Cursor,
 		})
 		if err != nil {
-			return nil, listSLOsToolOutput{}, err
+			return nil, ListSLOsToolOutput{}, err
 		}
 
-		output := listSLOsToolOutput{
-			SLOs: make([]listSLOsToolOutputItem, 0, len(resp.SLOs)),
-			Pagination: listSLOsToolOutputPagination{
+		output := ListSLOsToolOutput{
+			SLOs: make([]ListSLOsToolOutputItem, 0, len(resp.SLOs)),
+			Pagination: ListSLOsToolOutputPagination{
 				NextCursor:  resp.PaginationCursors.NextCursor,
 				PrevCursor:  resp.PaginationCursors.PrevCursor,
 				HasNext:     resp.PaginationCursors.HasNext,
@@ -101,8 +109,8 @@ func newListSLOsToolHandler(app SLOLister) sdkmcp.ToolHandlerFor[listSLOsToolInp
 	}
 }
 
-func mapRealTimeSLOToToolOutputItem(slo backendapp.RealTimeSLODetails) listSLOsToolOutputItem {
-	item := listSLOsToolOutputItem{
+func mapRealTimeSLOToToolOutputItem(slo backendapp.RealTimeSLODetails) ListSLOsToolOutputItem {
+	item := ListSLOsToolOutputItem{
 		ID:                        slo.SLO.ID,
 		SlothID:                   slo.SLO.SlothID,
 		Name:                      slo.SLO.Name,

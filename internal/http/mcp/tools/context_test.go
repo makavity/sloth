@@ -1,9 +1,11 @@
-package tools
+package tools_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/slok/sloth/internal/http/mcp/tools"
+	"github.com/slok/sloth/internal/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -11,10 +13,10 @@ import (
 func TestNewContextTool(t *testing.T) {
 	tests := map[string]struct {
 		expErr  bool
-		expResp contextToolOutput
+		expResp tools.ContextToolOutput
 	}{
 		"Tool should expose metadata and static context payload.": {
-			expResp: contextToolOutput{
+			expResp: tools.ContextToolOutput{
 				Version:     "dev",
 				Description: "Sloth is a Prometheus SLO framework that helps teams define service level objectives and creates a uniform, standardized layer of low-level Prometheus rules to implement SLOs, including the recording and alerting rules required to measure them.",
 			},
@@ -23,13 +25,13 @@ func TestNewContextTool(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			tool, handler := NewContextTool()
+			tool, handler := tools.NewContextTool(log.Noop)
 
 			require.NotNil(t, tool)
 			assert.Equal(t, "context", tool.Name)
-			assert.Equal(t, "Get context about Sloth and its SLO framework.", tool.Description)
+			assert.Equal(t, "Get context about Sloth and its SLO framework. Returns the running Sloth version and a description of what Sloth does.", tool.Description)
 
-			result, gotResp, err := handler(context.Background(), nil, contextToolInput{})
+			result, gotResp, err := handler(context.Background(), nil, tools.ContextToolInput{})
 			assert.Nil(t, result)
 
 			if test.expErr {
