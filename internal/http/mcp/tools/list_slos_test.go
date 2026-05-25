@@ -47,16 +47,56 @@ func TestNewListSLOsTool(t *testing.T) {
 				}
 				m.On("ListSLOs", mock.Anything, expReq).Once().Return(&backendapp.ListSLOsResponse{
 					SLOs: []backendapp.RealTimeSLODetails{{
-						SLO:    model.SLO{ID: "slo-id", SlothID: "sloth-slo-id", Name: "availability", ServiceID: "checkout", Objective: 99.9, PeriodDuration: 30 * 24 * time.Hour, IsGrouped: true, GroupLabels: map[string]string{"region": "eu-west-1"}},
-						Budget: model.SLOBudgetDetails{BurningBudgetPercent: 123.4, BurnedBudgetWindowPercent: 77.7},
-						Alerts: model.SLOAlerts{FiringPage: &model.Alert{Name: "PageAlert"}, FiringWarning: &model.Alert{Name: "WarnAlert"}},
+						SLO: model.SLO{
+							ID:             "slo-id",
+							SlothID:        "sloth-slo-id",
+							Name:           "availability",
+							ServiceID:      "checkout",
+							Objective:      99.9,
+							PeriodDuration: 30 * 24 * time.Hour,
+							IsGrouped:      true,
+							GroupLabels:    map[string]string{"region": "eu-west-1"},
+						},
+						Budget: model.SLOBudgetDetails{
+							BurningBudgetPercent:      123.4,
+							BurnedBudgetWindowPercent: 77.7,
+						},
+						Alerts: model.SLOAlerts{
+							FiringPage:    &model.Alert{Name: "PageAlert"},
+							FiringWarning: &model.Alert{Name: "WarnAlert"},
+						},
 					}},
-					PaginationCursors: backendapp.PaginationCursors{NextCursor: "next-1", PrevCursor: "prev-1", HasNext: true, HasPrevious: true},
+					PaginationCursors: backendapp.PaginationCursors{
+						NextCursor:  "next-1",
+						PrevCursor:  "prev-1",
+						HasNext:     true,
+						HasPrevious: true,
+					},
 				}, nil)
 			},
 			expResp: tools.ListSLOsToolOutput{
-				SLOs:       []tools.ListSLOsToolOutputItem{{ID: "slo-id", SlothID: "sloth-slo-id", Name: "availability", ServiceID: "checkout", Objective: 99.9, Period: "720h0m0s", IsGrouped: true, GroupLabels: map[string]string{"region": "eu-west-1"}, BurningBudgetPercent: 123.4, BurnedBudgetWindowPercent: 77.7, HasPageAlert: true, PageAlertName: "PageAlert", HasWarningAlert: true, WarningAlertName: "WarnAlert"}},
-				Pagination: tools.ListSLOsToolOutputPagination{NextCursor: "next-1", PrevCursor: "prev-1", HasNext: true, HasPrevious: true},
+				SLOs: []tools.ListSLOsToolOutputItem{{
+					ID:                        "slo-id",
+					SlothID:                   "sloth-slo-id",
+					Name:                      "availability",
+					ServiceID:                 "checkout",
+					Objective:                 99.9,
+					Period:                    "720h0m0s",
+					IsGrouped:                 true,
+					GroupLabels:               map[string]string{"region": "eu-west-1"},
+					BurningBudgetPercent:      123.4,
+					BurnedBudgetWindowPercent: 77.7,
+					HasPageAlert:              true,
+					PageAlertName:             "PageAlert",
+					HasWarningAlert:           true,
+					WarningAlertName:          "WarnAlert",
+				}},
+				Pagination: tools.ListSLOsToolOutputPagination{
+					NextCursor:  "next-1",
+					PrevCursor:  "prev-1",
+					HasNext:     true,
+					HasPrevious: true,
+				},
 			},
 		},
 		"It should default page size to 100.": {

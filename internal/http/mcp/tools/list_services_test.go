@@ -26,9 +26,38 @@ func TestNewListServicesTool(t *testing.T) {
 			input: tools.ListServicesToolInput{Search: "check", Size: 100, Sort: string(backendapp.ServiceListSortModeAlertSeverityDesc), Cursor: "cursor-1"},
 			mock: func(m *toolsmock.ServiceLister) {
 				expReq := backendapp.ListServicesRequest{FilterSearchInput: "check", PageSize: 100, SortMode: backendapp.ServiceListSortModeAlertSeverityDesc, Cursor: "cursor-1"}
-				m.On("ListServices", mock.Anything, expReq).Once().Return(&backendapp.ListServicesResponse{Services: []backendapp.ServiceAlerts{{Service: model.Service{ID: "checkout"}, Stats: model.ServiceStats{TotalSLOs: 4, SLOsCurrentlyBurningOverBudget: 1}, Alerts: []model.SLOAlerts{{FiringPage: &model.Alert{Name: "page"}}, {FiringWarning: &model.Alert{Name: "warn"}}}}}, PaginationCursors: backendapp.PaginationCursors{NextCursor: "next-1", HasNext: true}}, nil)
+				m.On("ListServices", mock.Anything, expReq).Once().Return(&backendapp.ListServicesResponse{
+					Services: []backendapp.ServiceAlerts{{
+						Service: model.Service{ID: "checkout"},
+						Stats: model.ServiceStats{
+							TotalSLOs:                      4,
+							SLOsCurrentlyBurningOverBudget: 1,
+						},
+						Alerts: []model.SLOAlerts{
+							{FiringPage: &model.Alert{Name: "page"}},
+							{FiringWarning: &model.Alert{Name: "warn"}},
+						},
+					}},
+					PaginationCursors: backendapp.PaginationCursors{
+						NextCursor: "next-1",
+						HasNext:    true,
+					},
+				}, nil)
 			},
-			expResp: tools.ListServicesToolOutput{Services: []tools.ListServicesToolOutputItem{{ID: "checkout", TotalSLOs: 4, SLOsCurrentlyBurningOverBudget: 1, TotalAlertsFiring: 2, HasWarning: true, HasCritical: true}}, Pagination: tools.ListSLOsToolOutputPagination{NextCursor: "next-1", HasNext: true}},
+			expResp: tools.ListServicesToolOutput{
+				Services: []tools.ListServicesToolOutputItem{{
+					ID:                             "checkout",
+					TotalSLOs:                      4,
+					SLOsCurrentlyBurningOverBudget: 1,
+					TotalAlertsFiring:              2,
+					HasWarning:                     true,
+					HasCritical:                    true,
+				}},
+				Pagination: tools.ListSLOsToolOutputPagination{
+					NextCursor: "next-1",
+					HasNext:    true,
+				},
+			},
 		},
 		"It should default page size to 100.": {
 			mock: func(m *toolsmock.ServiceLister) {
