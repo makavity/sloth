@@ -16,6 +16,7 @@ import (
 )
 
 type ServiceApp interface {
+	ListServices(ctx context.Context, req backendapp.ListServicesRequest) (*backendapp.ListServicesResponse, error)
 	ListSLOs(ctx context.Context, req backendapp.ListSLOsRequest) (*backendapp.ListSLOsResponse, error)
 	GetSLO(ctx context.Context, req backendapp.GetSLORequest) (*backendapp.GetSLOResponse, error)
 }
@@ -50,13 +51,16 @@ func New(cfg Config) (http.Handler, error) {
 	}, nil)
 	registeredTools := 0
 
-	contextTool, contextToolHandler := tools.NewContextTool()
+	contextTool, contextToolHandler := tools.NewContextTool(cfg.Logger.WithValues(log.Kv{"tool": "context"}))
 	registerTool(server, contextTool, contextToolHandler)
 	registeredTools++
-	listSLOsTool, listSLOsToolHandler := tools.NewListSLOsTool(cfg.ServiceApp)
+	listSLOsTool, listSLOsToolHandler := tools.NewListSLOsTool(cfg.ServiceApp, cfg.Logger.WithValues(log.Kv{"tool": "list_slos"}))
 	registerTool(server, listSLOsTool, listSLOsToolHandler)
 	registeredTools++
-	getSLOTool, getSLOToolHandler := tools.NewGetSLOTool(cfg.ServiceApp)
+	listServicesTool, listServicesToolHandler := tools.NewListServicesTool(cfg.ServiceApp, cfg.Logger.WithValues(log.Kv{"tool": "list_services"}))
+	registerTool(server, listServicesTool, listServicesToolHandler)
+	registeredTools++
+	getSLOTool, getSLOToolHandler := tools.NewGetSLOTool(cfg.ServiceApp, cfg.Logger.WithValues(log.Kv{"tool": "get_slo"}))
 	registerTool(server, getSLOTool, getSLOToolHandler)
 	registeredTools++
 
