@@ -64,7 +64,7 @@ func New(cfg Config) (http.Handler, error) {
 	getSLOTool, getSLOToolHandler := tools.NewGetSLOTool(cfg.ServiceApp, cfg.Logger.WithValues(log.Kv{"tool": "get_slo"}))
 	registerTool(server, getSLOTool, getSLOToolHandler)
 	registeredTools++
-	getBurnedBudgetRangeTool, getBurnedBudgetRangeToolHandler := tools.NewGetBurnedBudgetRangeTool(cfg.ServiceApp, cfg.Logger.WithValues(log.Kv{"tool": "get_burned_budget_range"}))
+	getBurnedBudgetRangeTool, getBurnedBudgetRangeToolHandler := tools.NewGetSLOBurnedBudgetRangeTool(cfg.ServiceApp, cfg.Logger.WithValues(log.Kv{"tool": "get_slo_burned_budget_range"}))
 	registerTool(server, getBurnedBudgetRangeTool, getBurnedBudgetRangeToolHandler)
 	registeredTools++
 

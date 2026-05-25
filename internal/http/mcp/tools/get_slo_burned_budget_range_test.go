@@ -16,18 +16,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewGetBurnedBudgetRangeTool(t *testing.T) {
+func TestNewGetSLOBurnedBudgetRangeTool(t *testing.T) {
 	ts1 := time.Date(2026, 5, 25, 10, 0, 0, 0, time.UTC)
 	ts2 := time.Date(2026, 5, 25, 11, 0, 0, 0, time.UTC)
 
 	tests := map[string]struct {
-		input   tools.GetBurnedBudgetRangeToolInput
+		input   tools.GetSLOBurnedBudgetRangeToolInput
 		mock    func(m *toolsmock.BurnedBudgetRangeLister)
 		expErr  bool
-		expResp tools.GetBurnedBudgetRangeToolOutput
+		expResp tools.GetSLOBurnedBudgetRangeToolOutput
 	}{
 		"It should map the backend request and response.": {
-			input: tools.GetBurnedBudgetRangeToolInput{SLOID: "slo-id", RangeType: string(backendapp.BudgetRangeTypeMonthly)},
+			input: tools.GetSLOBurnedBudgetRangeToolInput{SLOID: "slo-id", RangeType: string(backendapp.BudgetRangeTypeMonthly)},
 			mock: func(m *toolsmock.BurnedBudgetRangeLister) {
 				expReq := backendapp.ListBurnedBudgetRangeRequest{SLOID: "slo-id", BudgetRangeType: backendapp.BudgetRangeTypeMonthly}
 				m.On("ListBurnedBudgetRange", mock.Anything, expReq).Once().Return(&backendapp.ListBurnedBudgetRangeResponse{
@@ -37,7 +37,7 @@ func TestNewGetBurnedBudgetRangeTool(t *testing.T) {
 					PerfectBurnedDataPoints:           []model.DataPoint{{TS: ts1, Value: 98.2}, {TS: ts2, Value: 97.1}},
 				}, nil)
 			},
-			expResp: tools.GetBurnedBudgetRangeToolOutput{
+			expResp: tools.GetSLOBurnedBudgetRangeToolOutput{
 				CurrentBurnedValuePercent:         87.1,
 				CurrentExpectedBurnedValuePercent: 92.2,
 				StartTS:                           ts1.Format(time.RFC3339),
@@ -47,7 +47,7 @@ func TestNewGetBurnedBudgetRangeTool(t *testing.T) {
 			},
 		},
 		"Having a backend error should fail.": {
-			input: tools.GetBurnedBudgetRangeToolInput{SLOID: "slo-id", RangeType: string(backendapp.BudgetRangeTypeWeekly)},
+			input: tools.GetSLOBurnedBudgetRangeToolInput{SLOID: "slo-id", RangeType: string(backendapp.BudgetRangeTypeWeekly)},
 			mock: func(m *toolsmock.BurnedBudgetRangeLister) {
 				m.On("ListBurnedBudgetRange", mock.Anything, backendapp.ListBurnedBudgetRangeRequest{SLOID: "slo-id", BudgetRangeType: backendapp.BudgetRangeTypeWeekly}).Once().Return(nil, fmt.Errorf("something wrong"))
 			},
@@ -62,9 +62,9 @@ func TestNewGetBurnedBudgetRangeTool(t *testing.T) {
 				test.mock(m)
 			}
 
-			tool, handler := tools.NewGetBurnedBudgetRangeTool(m, log.Noop)
+			tool, handler := tools.NewGetSLOBurnedBudgetRangeTool(m, log.Noop)
 			require.NotNil(t, tool)
-			assert.Equal(t, "get_burned_budget_range", tool.Name)
+			assert.Equal(t, "get_slo_burned_budget_range", tool.Name)
 			result, gotResp, err := handler(context.Background(), nil, test.input)
 			assert.Nil(t, result)
 

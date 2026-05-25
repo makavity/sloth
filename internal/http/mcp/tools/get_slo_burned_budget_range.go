@@ -18,24 +18,24 @@ type BurnedBudgetRangeLister interface {
 	ListBurnedBudgetRange(ctx context.Context, req backendapp.ListBurnedBudgetRangeRequest) (*backendapp.ListBurnedBudgetRangeResponse, error)
 }
 
-func NewGetBurnedBudgetRangeTool(app BurnedBudgetRangeLister, logger log.Logger) (*sdkmcp.Tool, sdkmcp.ToolHandlerFor[GetBurnedBudgetRangeToolInput, GetBurnedBudgetRangeToolOutput]) {
+func NewGetSLOBurnedBudgetRangeTool(app BurnedBudgetRangeLister, logger log.Logger) (*sdkmcp.Tool, sdkmcp.ToolHandlerFor[GetSLOBurnedBudgetRangeToolInput, GetSLOBurnedBudgetRangeToolOutput]) {
 	if logger == nil {
 		logger = log.Noop
 	}
 
 	return &sdkmcp.Tool{
-		Name:        "get_burned_budget_range",
+		Name:        "get_slo_burned_budget_range",
 		Description: "Get actual and expected burned budget evolution for an SLO over a standard time range. Values use a 0-100 normalized remaining-budget scale over the selected period, where 100 means the full budget is still available and 0 means the budget is exhausted. Returns current real and expected values plus compressed real and perfect series. Each comma-separated series entry advances by one step from start_ts, and x means the real value is missing at that step.",
 		Annotations: &sdkmcp.ToolAnnotations{ReadOnlyHint: true},
-	}, newGetBurnedBudgetRangeToolHandler(app, logger)
+	}, newGetSLOBurnedBudgetRangeToolHandler(app, logger)
 }
 
-type GetBurnedBudgetRangeToolInput struct {
+type GetSLOBurnedBudgetRangeToolInput struct {
 	SLOID     string `json:"slo_id" jsonschema:"required,The SLO ID to retrieve"`
 	RangeType string `json:"range_type,omitempty" jsonschema:"Optional range type: monthly, weekly, quarterly, yearly"`
 }
 
-type GetBurnedBudgetRangeToolOutput struct {
+type GetSLOBurnedBudgetRangeToolOutput struct {
 	CurrentBurnedValuePercent         float64 `json:"current_burned_value_percent" jsonschema:"the current real remaining budget percentage on a 0-100 scale for the selected period"`
 	CurrentExpectedBurnedValuePercent float64 `json:"current_expected_burned_value_percent" jsonschema:"the current expected remaining budget percentage on a 0-100 scale for the selected period"`
 	StartTS                           string  `json:"start_ts" jsonschema:"the RFC3339 timestamp of the first point in both series"`
@@ -44,8 +44,8 @@ type GetBurnedBudgetRangeToolOutput struct {
 	PerfectSeries                     string  `json:"perfect_series" jsonschema:"comma-separated expected remaining budget values from start_ts advancing by step"`
 }
 
-func newGetBurnedBudgetRangeToolHandler(app BurnedBudgetRangeLister, logger log.Logger) sdkmcp.ToolHandlerFor[GetBurnedBudgetRangeToolInput, GetBurnedBudgetRangeToolOutput] {
-	return func(ctx context.Context, _ *sdkmcp.CallToolRequest, input GetBurnedBudgetRangeToolInput) (*sdkmcp.CallToolResult, GetBurnedBudgetRangeToolOutput, error) {
+func newGetSLOBurnedBudgetRangeToolHandler(app BurnedBudgetRangeLister, logger log.Logger) sdkmcp.ToolHandlerFor[GetSLOBurnedBudgetRangeToolInput, GetSLOBurnedBudgetRangeToolOutput] {
+	return func(ctx context.Context, _ *sdkmcp.CallToolRequest, input GetSLOBurnedBudgetRangeToolInput) (*sdkmcp.CallToolResult, GetSLOBurnedBudgetRangeToolOutput, error) {
 		logger.WithValues(log.Kv{"input": fmt.Sprintf("%+v", input)}).Debugf("MCP tool called")
 
 		resp, err := app.ListBurnedBudgetRange(ctx, backendapp.ListBurnedBudgetRangeRequest{
@@ -53,7 +53,7 @@ func newGetBurnedBudgetRangeToolHandler(app BurnedBudgetRangeLister, logger log.
 			BudgetRangeType: backendapp.BudgetRangeType(input.RangeType),
 		})
 		if err != nil {
-			return nil, GetBurnedBudgetRangeToolOutput{}, err
+			return nil, GetSLOBurnedBudgetRangeToolOutput{}, err
 		}
 
 		startTS, step := getSeriesMeta(resp.PerfectBurnedDataPoints)
@@ -61,7 +61,7 @@ func newGetBurnedBudgetRangeToolHandler(app BurnedBudgetRangeLister, logger log.
 			startTS, step = getSeriesMeta(resp.RealBurnedDataPoints)
 		}
 
-		return nil, GetBurnedBudgetRangeToolOutput{
+		return nil, GetSLOBurnedBudgetRangeToolOutput{
 			CurrentBurnedValuePercent:         resp.CurrentBurnedValuePercent,
 			CurrentExpectedBurnedValuePercent: resp.CurrentExpectedBurnedValuePercent,
 			StartTS:                           startTS,
