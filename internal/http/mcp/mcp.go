@@ -19,6 +19,7 @@ type ServiceApp interface {
 	ListServices(ctx context.Context, req backendapp.ListServicesRequest) (*backendapp.ListServicesResponse, error)
 	ListSLOs(ctx context.Context, req backendapp.ListSLOsRequest) (*backendapp.ListSLOsResponse, error)
 	GetSLO(ctx context.Context, req backendapp.GetSLORequest) (*backendapp.GetSLOResponse, error)
+	ListSLIAvailabilityRange(ctx context.Context, req backendapp.ListSLIAvailabilityRangeRequest) (*backendapp.ListSLIAvailabilityRangeResponse, error)
 	ListBurnedBudgetRange(ctx context.Context, req backendapp.ListBurnedBudgetRangeRequest) (*backendapp.ListBurnedBudgetRangeResponse, error)
 }
 
@@ -66,6 +67,9 @@ func New(cfg Config) (http.Handler, error) {
 	registeredTools++
 	getBurnedBudgetRangeTool, getBurnedBudgetRangeToolHandler := tools.NewGetSLOBurnedBudgetRangeTool(cfg.ServiceApp, cfg.Logger.WithValues(log.Kv{"tool": "get_slo_burned_budget_range"}))
 	registerTool(server, getBurnedBudgetRangeTool, getBurnedBudgetRangeToolHandler)
+	registeredTools++
+	getSLIAvailabilityRangeTool, getSLIAvailabilityRangeToolHandler := tools.NewGetSLOSLIAvailabilityRangeTool(cfg.ServiceApp, cfg.Logger.WithValues(log.Kv{"tool": "get_slo_sli_availability_range"}))
+	registerTool(server, getSLIAvailabilityRangeTool, getSLIAvailabilityRangeToolHandler)
 	registeredTools++
 
 	cfg.Logger.WithValues(log.Kv{"tools": registeredTools}).Infof("MCP request/response handler enabled")
